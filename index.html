@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow">
+<meta name="bingbot" content="noindex, nofollow">
+<title>Journey Comparison Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand-primary: #E31837;
+  --brand-light: rgba(227, 24, 55, 0.08);
+  --brand-glow: rgba(227, 24, 55, 0.15);
+  --bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --card-old-bg: #F8F8F8;
+  --text-primary: #121212;
+  --text-secondary: #414141;
+  --text-muted: #717171;
+  --border-color: #E8E8E8;
+  --panel-width: 280px;
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  --screen-width: 156px;
+  --screen-height: 280px;
+  --card-width: 180px;
+  --commentary-width: 230px;
+  --wire-accent: var(--brand-primary);
+  --wire-line: #D4D4D4;
+  --wire-block: #E8E8E8;
+  --color-positive: #2D6A4F;
+  --color-negative: #9B2C2C;
+  --color-neutral: #555555;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif { font-family: 'Playfair Display', Georgia, serif; }
+
+.app {
+  display: grid;
+  grid-template-columns: var(--panel-width) 1fr;
+  grid-template-rows: 52px 1fr 36px;
+  height: 100vh;
+  width: 100vw;
+}
+
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 64px;
+  background: var(--card-bg);
+  z-index: 10;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 400; letter-spacing: -0.02em; }
+.header-divider { width: 1px; height: 18px; background: var(--border-color); }
+.header-subtitle { font-size: 11px; color: var(--text-muted); font-weight: 400; letter-spacing: -0.01em; }
+.progress-indicator {
+  font-size: 11px; font-weight: 400; color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+
+.left-panel {
+  grid-row: 2 / 4;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-color);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  animation: slideInPanel 0.6s var(--ease-smooth) forwards;
+  animation-delay: 0.05s;
+  z-index: 5;
+}
+@keyframes slideInPanel { to { transform: translateX(0); } }
+
+.panel-section-label {
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: 11px; font-weight: 400;
+  color: var(--text-muted); margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+.journey-list { display: flex; flex-direction: column; gap: 2px; }
+.journey-option {
+  position: relative; padding: 10px 14px;
+  cursor: pointer; font-size: 12px; line-height: 1.5;
+  color: var(--text-secondary); transition: all 0.5s var(--ease-smooth);
+  border-left: 2px solid transparent; font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.journey-option:hover { color: var(--text-primary); background: #FAFAFA; }
+.journey-option.active {
+  color: var(--text-primary);
+  border-left-color: var(--brand-primary);
+  background: #FAFAFA;
+}
+.journey-option input { display: none; }
+
+.segment-toggle {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border-color);
+}
+.segment-btn {
+  flex: 1; padding: 8px 4px; border: none; background: none;
+  font-family: inherit; font-size: 11px; font-weight: 400; cursor: pointer;
+  color: var(--text-muted); transition: all 0.5s var(--ease-smooth);
+  border-bottom: 2px solid transparent; letter-spacing: -0.01em;
+}
+.segment-btn:hover { color: var(--text-primary); }
+.segment-btn.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--brand-primary);
+}
+.segment-btn .color-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 0;
+  margin-right: 4px; vertical-align: middle;
+}
+.segment-btn[data-segment="posb"] .color-dot { background: #0072AA; }
+.segment-btn[data-segment="dbs"] .color-dot { background: #E31837; }
+.segment-btn[data-segment="treasures"] .color-dot { background: #C5A664; }
+
+.panel-info {
+  margin-top: auto; font-size: 10px; color: var(--text-muted); line-height: 1.7;
+  letter-spacing: -0.01em;
+}
+.panel-info kbd {
+  display: inline-block; padding: 1px 5px; background: #F5F5F5;
+  border: 1px solid var(--border-color); border-radius: 2px;
+  font-family: inherit; font-size: 9px; font-weight: 500;
+}
+
+.main-area {
+  grid-row: 2;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.lane-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lane-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lane {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+.lane-new {
+  flex: 5;
+  border-bottom: 1px solid var(--border-color);
+}
+.lane-commentary {
+  flex: 3;
+  border-bottom: 1px solid var(--border-color);
+}
+.lane-old {
+  flex: 5;
+}
+
+.lane-label {
+  position: absolute; left: 24px; top: 10px;
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: 11px; font-weight: 400; color: var(--text-muted); z-index: 3;
+  pointer-events: none; letter-spacing: -0.01em;
+}
+
+.scroll-container {
+  position: absolute; inset: 0;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; scrollbar-color: var(--border-color) transparent;
+}
+.lane-commentary .scroll-container,
+.lane-old .scroll-container {
+  overflow-x: hidden; pointer-events: none;
+}
+.lane-new .scroll-container::-webkit-scrollbar { height: 4px; }
+.lane-new .scroll-container::-webkit-scrollbar-track { background: transparent; }
+.lane-new .scroll-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+.lane-track {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  padding: 32px 64px 12px 120px;
+  height: 100%;
+  min-width: max-content;
+}
+.lane-commentary .lane-track {
+  padding-top: 14px;
+  padding-bottom: 10px;
+  align-items: center;
+}
+
+.step-card {
+  flex-shrink: 0;
+  width: var(--card-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s var(--ease-smooth), transform 0.5s var(--ease-smooth);
+}
+.step-card.visible { opacity: 1; transform: translateY(0); }
+.step-card.highlighted .phone-frame {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 2px var(--brand-glow);
+}
+
+.phone-frame {
+  width: var(--screen-width);
+  height: var(--screen-height);
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1.5px solid var(--border-color);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.5s var(--ease-smooth);
+  flex-shrink: 0;
+}
+.phone-frame:hover { border-color: var(--text-muted); cursor: pointer; }
+.lane-old .phone-frame { background: var(--card-old-bg); opacity: 0.8; }
+.lane-old .phone-frame:hover { opacity: 1; }
+
+.phone-notch {
+  width: 48px; height: 4px; background: var(--border-color);
+  border-radius: 0 0 4px 4px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+}
+
+.step-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 12px; font-weight: 400; text-align: center;
+  max-width: var(--screen-width); line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+.step-number { font-size: 9px; font-weight: 400; color: var(--text-muted); letter-spacing: 0.02em; }
+
+.step-tag {
+  display: inline-block; font-size: 9px; font-weight: 400;
+  letter-spacing: 0.02em;
+  padding: 2px 0; border-bottom: 1.5px solid;
+  background: transparent;
+}
+.step-tag.new-step { color: var(--color-positive); border-bottom-color: var(--color-positive); }
+.step-tag.removed-step { color: var(--color-negative); border-bottom-color: var(--color-negative); }
+
+.flow-connector {
+  flex-shrink: 0; width: 36px; height: 1px;
+  background: var(--border-color); position: relative;
+  align-self: center; margin-top: -24px;
+}
+.flow-connector::after {
+  content: ''; position: absolute; right: -1px; top: -3px;
+  width: 6px; height: 6px;
+  border-right: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+  transform: rotate(45deg);
+}
+
+.wire-content {
+  padding: 12px 10px; display: flex; flex-direction: column;
+  gap: 6px; height: 100%; padding-top: 16px;
+}
+.wire-status-bar { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; }
+.wire-status-bar .wire-time { font-size: 7px; font-weight: 500; color: var(--text-muted); }
+.wire-status-bar .wire-icons { display: flex; gap: 2px; }
+.wire-status-bar .wire-icons span { width: 8px; height: 5px; background: var(--text-muted); border-radius: 1px; }
+.wire-header-bar { display: flex; align-items: center; gap: 5px; padding: 4px 0; }
+.wire-back-arrow {
+  width: 10px; height: 10px;
+  border-left: 1.5px solid var(--wire-accent);
+  border-bottom: 1.5px solid var(--wire-accent);
+  transform: rotate(45deg); flex-shrink: 0;
+}
+.wire-header-title { height: 6px; flex: 1; background: var(--text-primary); border-radius: 1px; opacity: 0.6; }
+.wire-block { height: 10px; background: var(--wire-block); border-radius: 2px; width: 100%; }
+.wire-block.short { width: 60%; }
+.wire-block.medium { width: 80%; }
+.wire-block.accent { background: var(--wire-accent); opacity: 0.12; }
+.wire-block.tall { height: 28px; }
+.wire-block.xtall { height: 40px; }
+.wire-line { height: 4px; background: var(--wire-line); border-radius: 1px; width: 100%; }
+.wire-line.short { width: 45%; }
+.wire-line.medium { width: 70%; }
+.wire-input {
+  height: 24px; background: #FAFAFA; border: 1px solid var(--border-color);
+  border-radius: 0; display: flex; align-items: center; padding: 0 7px;
+}
+.wire-input .wire-placeholder { height: 4px; width: 50%; background: var(--wire-line); border-radius: 1px; }
+.wire-button {
+  height: 24px; background: var(--wire-accent); border-radius: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.wire-button .wire-btn-text { height: 4px; width: 40%; background: white; border-radius: 1px; }
+.wire-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--wire-accent); opacity: 0.15; flex-shrink: 0; }
+.wire-row { display: flex; gap: 6px; align-items: center; }
+.wire-col { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.wire-card { background: #FAFAFA; border-radius: 0; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.wire-divider { height: 1px; background: var(--border-color); width: 100%; }
+.wire-spacer { flex: 1; }
+.wire-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border-color); padding-bottom: 3px; }
+.wire-tab { flex: 1; height: 4px; background: var(--wire-line); border-radius: 1px; }
+.wire-tab.active { background: var(--wire-accent); }
+.wire-bottom-nav { display: flex; gap: 3px; padding: 5px 0 0; border-top: 1px solid var(--border-color); margin-top: auto; }
+.wire-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.wire-nav-icon { width: 12px; height: 12px; background: var(--wire-line); border-radius: 2px; }
+.wire-nav-icon.active { background: var(--wire-accent); }
+.wire-nav-text { width: 16px; height: 3px; background: var(--wire-line); border-radius: 1px; }
+.wire-amount { font-size: 14px; font-weight: 400; color: var(--text-primary); text-align: center; padding: 3px 0; font-family: 'Inter', sans-serif; }
+.wire-amount-small { font-size: 9px; font-weight: 400; color: var(--text-secondary); text-align: center; }
+.wire-chart { display: flex; align-items: flex-end; gap: 3px; height: 32px; padding: 3px 0; }
+.wire-chart-bar { flex: 1; background: var(--wire-accent); border-radius: 1px 1px 0 0; opacity: 0.25; min-height: 5px; }
+.wire-chart-bar.active { opacity: 0.7; }
+.wire-toggle { display: flex; gap: 3px; align-items: center; }
+.wire-toggle-track { width: 20px; height: 10px; background: var(--wire-accent); border-radius: 5px; position: relative; }
+.wire-toggle-thumb { width: 8px; height: 8px; background: white; border-radius: 50%; position: absolute; top: 1px; right: 1px; }
+.wire-list-item { display: flex; align-items: center; gap: 5px; padding: 3px 0; }
+.wire-list-icon { width: 20px; height: 20px; background: var(--wire-accent); opacity: 0.12; border-radius: 0; flex-shrink: 0; }
+
+.commentary-card {
+  flex-shrink: 0;
+  width: var(--commentary-width);
+  padding: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.5s var(--ease-smooth);
+  cursor: default;
+}
+.commentary-card.visible { opacity: 1; transform: translateY(0); }
+.commentary-card.highlighted .commentary-inner { background: #FAFAFA; }
+
+.commentary-inner {
+  background: transparent;
+  border-top: 2px solid var(--border-color);
+  padding: 20px 4px;
+  transition: all 0.5s var(--ease-smooth);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.commentary-inner.type-positive { border-top-color: var(--color-positive); }
+.commentary-inner.type-negative { border-top-color: var(--color-negative); }
+.commentary-inner.type-neutral { border-top-color: var(--color-neutral); }
+.commentary-inner.type-no-change { border-top-color: var(--border-color); }
+
+.commentary-type-label {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.commentary-type-label.positive { color: var(--color-positive); }
+.commentary-type-label.negative { color: var(--color-negative); }
+.commentary-type-label.neutral { color: var(--color-neutral); }
+
+.commentary-delta {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px; line-height: 1.5; color: var(--text-primary); font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.commentary-sentiment {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 12px; line-height: 1.45; color: var(--text-muted); font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.commentary-no-change {
+  font-size: 11px; color: var(--text-muted); font-weight: 400;
+  font-family: 'Playfair Display', serif; font-style: italic;
+  padding: 4px 0;
+}
+
+.commentary-spacer { flex-shrink: 0; width: 36px; }
+
+.footer {
+  grid-column: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 64px;
+  background: var(--card-bg);
+}
+.footer-legend { display: flex; gap: 18px; font-size: 10px; color: var(--text-muted); letter-spacing: -0.01em; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 7px; height: 7px; border-radius: 0; }
+.legend-dot.positive { background: var(--color-positive); }
+.legend-dot.negative { background: var(--color-negative); }
+.legend-dot.neutral { background: var(--color-neutral); }
+.legend-dot.new { background: var(--color-positive); opacity: 0.4; }
+.legend-dot.removed { background: var(--color-negative); opacity: 0.4; }
+.footer-right { font-size: 10px; color: var(--text-muted); letter-spacing: -0.01em; }
+
+.card-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 100; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.5s var(--ease-smooth);
+}
+.card-overlay.active { opacity: 1; pointer-events: all; }
+.card-overlay .expanded-card {
+  background: var(--card-bg); border-radius: 0; padding: 32px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+  transform: scale(0.95); transition: transform 0.5s var(--ease-smooth);
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  position: relative;
+}
+.card-overlay.active .expanded-card { transform: scale(1); }
+.expanded-card .phone-frame { width: 270px; height: 480px; }
+.expanded-card .expanded-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 400; letter-spacing: -0.02em; }
+.expanded-card .expanded-desc { font-size: 13px; color: var(--text-secondary); text-align: center; max-width: 300px; line-height: 1.6; letter-spacing: -0.01em; }
+.expanded-card .expanded-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 28px; height: 28px; border: none; background: transparent;
+  cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: color 0.5s;
+}
+.expanded-card .expanded-close:hover { color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<div id="authGate" style="display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;background:#FFFFFF;position:fixed;inset:0;z-index:9999;">
+  <div style="text-align:center;max-width:320px;">
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;letter-spacing:-0.02em;margin-bottom:8px;">Journey Comparison</div>
+    <div style="font-size:12px;color:#717171;margin-bottom:32px;letter-spacing:-0.01em;">Enter password to continue</div>
+    <input id="authInput" type="password" placeholder="Password" autofocus
+      style="width:100%;padding:12px 16px;border:1px solid #E8E8E8;background:#FFFFFF;font-family:'Inter',sans-serif;font-size:13px;outline:none;letter-spacing:-0.01em;transition:border-color 0.5s;"
+      onfocus="this.style.borderColor='#121212'" onblur="this.style.borderColor='#E8E8E8'">
+    <div id="authError" style="font-size:11px;color:#9B2C2C;margin-top:8px;opacity:0;transition:opacity 0.3s;letter-spacing:-0.01em;">Incorrect password</div>
+  </div>
+</div>
+<script>
+(function() {
+  var AUTH_KEY = 'jct_authenticated';
+  var gate = document.getElementById('authGate');
+  if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+    gate.style.display = 'none';
+  } else {
+    document.getElementById('authInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        if (this.value === 'Aleph') {
+          sessionStorage.setItem(AUTH_KEY, 'true');
+          gate.style.transition = 'opacity 0.5s';
+          gate.style.opacity = '0';
+          setTimeout(function() { gate.style.display = 'none'; }, 500);
+        } else {
+          document.getElementById('authError').style.opacity = '1';
+          this.value = '';
+          setTimeout(function() { document.getElementById('authError').style.opacity = '0'; }, 2000);
+        }
+      }
+    });
+  }
+})();
+</script>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <span class="header-title">Journey Comparison</span>
+      <span class="header-divider"></span>
+      <span class="header-subtitle">Old vs. New Experience Review</span>
+    </div>
+    <div class="header-right">
+      <span class="progress-indicator" id="progressIndicator"></span>
+    </div>
+  </header>
+
+  <aside class="left-panel" id="leftPanel">
+    <div>
+      <div class="panel-section-label">Journey</div>
+      <div class="journey-list" id="journeyList"></div>
+    </div>
+    <div>
+      <div class="panel-section-label">Segment</div>
+      <div class="segment-toggle" id="segmentToggle">
+        <button class="segment-btn" data-segment="posb"><span class="color-dot"></span>Blue</button>
+        <button class="segment-btn active" data-segment="dbs"><span class="color-dot"></span>Red</button>
+        <button class="segment-btn" data-segment="treasures"><span class="color-dot"></span>Gold</button>
+      </div>
+    </div>
+    <div class="panel-info">
+      <kbd>&larr;</kbd> <kbd>&rarr;</kbd> Step through cards<br>
+      Scroll horizontally to browse<br>
+      Click a card to expand
+    </div>
+  </aside>
+
+  <main class="main-area" id="mainArea">
+    <div class="lane-container">
+      <div class="lane-wrapper">
+        <div class="lane lane-new" id="laneNew">
+          <span class="lane-label">New design</span>
+          <div class="scroll-container" id="scrollNew">
+            <div class="lane-track" id="trackNew"></div>
+          </div>
+        </div>
+        <div class="lane lane-commentary" id="laneCommentary">
+          <span class="lane-label">What changed</span>
+          <div class="scroll-container" id="scrollCommentary">
+            <div class="lane-track" id="trackCommentary"></div>
+          </div>
+        </div>
+        <div class="lane lane-old" id="laneOld">
+          <span class="lane-label">Current design</span>
+          <div class="scroll-container" id="scrollOld">
+            <div class="lane-track" id="trackOld"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-legend">
+      <span class="legend-item"><span class="legend-dot positive"></span> Improvement</span>
+      <span class="legend-item"><span class="legend-dot negative"></span> Risk</span>
+      <span class="legend-item"><span class="legend-dot neutral"></span> Change</span>
+      <span class="legend-item"><span class="legend-dot new"></span> New step</span>
+      <span class="legend-item"><span class="legend-dot removed"></span> Removed</span>
+    </div>
+    <div class="footer-right">Built for stakeholder review</div>
+  </footer>
+</div>
+
+<div class="card-overlay" id="cardOverlay">
+  <div class="expanded-card" id="expandedCard">
+    <button class="expanded-close" id="expandedClose">&times;</button>
+    <div id="expandedFrame"></div>
+    <div class="expanded-title" id="expandedTitle"></div>
+    <div class="expanded-desc" id="expandedDesc"></div>
+  </div>
+</div>
+
+<script>
+// DATA MODEL — 9 steps per new journey, 7-8 old steps
+const JOURNEYS = {
+  "sign-up-to-dashboard": {
+    label: "I just signed up and want to see my dashboard",
+    segments: {
+      posb: {
+        newDesign: [
+          { step: 1, title: "Welcome Screen", description: "Personalized greeting with customer's name and quick-start tips", wireframe: "welcome-new", tag: null },
+          { step: 2, title: "Set Up Profile", description: "Quick profile with photo upload and nickname", wireframe: "profile-new", tag: "new-step" },
+          { step: 3, title: "Account Overview", description: "Unified view of all accounts with spending snapshot", wireframe: "dashboard-new", tag: null },
+          { step: 4, title: "Quick Actions", description: "Contextual shortcuts based on account type", wireframe: "actions-new", tag: null },
+          { step: 5, title: "Notification Preferences", description: "Choose alerts for spending, deposits, and security", wireframe: "notifications-new", tag: "new-step" },
+          { step: 6, title: "Security Setup", description: "Biometric login and device trust configuration", wireframe: "security-new", tag: "new-step" },
+          { step: 7, title: "Goal Setting", description: "Set savings goals with visual progress trackers", wireframe: "goals-new", tag: "new-step" },
+          { step: 8, title: "Insights Widget", description: "AI-powered spending insights and suggestions", wireframe: "insights-new", tag: "new-step" },
+          { step: 9, title: "Personalized Dashboard", description: "Fully configured home with widgets arranged by preference", wireframe: "final-dashboard-new", tag: "new-step" }
+        ],
+        oldDesign: [
+          { step: 1, title: "Generic Welcome", description: "Standard welcome message with terms acknowledgment", wireframe: "welcome-old", tag: null },
+          { step: 2, title: "Account Overview", description: "Basic list of accounts with balances", wireframe: "dashboard-old", tag: null },
+          { step: 3, title: "Quick Actions", description: "Fixed grid of common actions, same for all users", wireframe: "actions-old", tag: null },
+          { step: 4, title: "Notifications", description: "Default notification settings, no customization", wireframe: "notifications-old", tag: null },
+          { step: 5, title: "Settings", description: "Dense settings page with many toggles", wireframe: "settings-old", tag: null },
+          { step: 6, title: "Promotions Banner", description: "Generic promotional content", wireframe: "promo-old", tag: "removed-step" },
+          { step: 7, title: "Dashboard", description: "Static dashboard layout, no personalization", wireframe: "dashboard-old", tag: null }
+        ],
+        commentary: [
+          { step: 1, type: "positive", delta: "Uses the customer's name immediately rather than a generic greeting. Removes mandatory terms dialog.", sentiment: "Users feel recognized from the first interaction." },
+          { step: 2, type: "neutral", delta: "Profile setup is a brand-new step. Lets users personalize upfront.", sentiment: "Feels like onboarding, not bureaucracy — but adds a step." },
+          { step: 3, type: "positive", delta: "Consolidates all accounts into one view with spending snapshot. Old design was a flat list.", sentiment: "Users see everything at a glance without navigating." },
+          { step: 4, type: "positive", delta: "Actions adapt based on account type and past behavior instead of a fixed grid.", sentiment: "Feels smarter and less cluttered." },
+          { step: 5, type: "positive", delta: "Granular notification control replaces one-size-fits-all defaults.", sentiment: "Users stay informed without being overwhelmed." },
+          { step: 6, type: "neutral", delta: "New biometric and device trust setup adds a step but removes future friction.", sentiment: "Upfront investment for smoother daily use." },
+          { step: 7, type: "positive", delta: "Goal setting with visual trackers is entirely new — old design had no equivalent.", sentiment: "Transforms the app from transactional to aspirational." },
+          { step: 8, type: "positive", delta: "AI-powered insights widget replaces the old generic promo banner.", sentiment: "Users get value instead of ads — builds trust." },
+          { step: 9, type: "positive", delta: "Personalized dashboard adapts layout to user preferences and usage patterns.", sentiment: "Every login feels tailored, not templated." }
+        ]
+      },
+      dbs: {
+        newDesign: [
+          { step: 1, title: "Welcome Screen", description: "Personalized greeting with name and account highlights", wireframe: "welcome-new", tag: null },
+          { step: 2, title: "Set Up Profile", description: "Streamlined profile with preferences selection", wireframe: "profile-new", tag: "new-step" },
+          { step: 3, title: "Account Overview", description: "Portfolio-style dashboard with balance trends", wireframe: "dashboard-new", tag: null },
+          { step: 4, title: "Quick Actions", description: "Smart shortcuts based on usage patterns", wireframe: "actions-new", tag: null },
+          { step: 5, title: "Notification Preferences", description: "Smart alert configuration with spending thresholds", wireframe: "notifications-new", tag: "new-step" },
+          { step: 6, title: "Security Setup", description: "Face ID, fingerprint, and trusted device management", wireframe: "security-new", tag: "new-step" },
+          { step: 7, title: "Goal Setting", description: "Financial goal creation with milestone tracking", wireframe: "goals-new", tag: "new-step" },
+          { step: 8, title: "Insights Widget", description: "Personalized financial health score and tips", wireframe: "insights-new", tag: "new-step" },
+          { step: 9, title: "Personalized Dashboard", description: "Adaptive home screen organized by usage frequency", wireframe: "final-dashboard-new", tag: "new-step" }
+        ],
+        oldDesign: [
+          { step: 1, title: "Generic Welcome", description: "Standard welcome with regulatory notices", wireframe: "welcome-old", tag: null },
+          { step: 2, title: "Account Overview", description: "Tabular list of accounts", wireframe: "dashboard-old", tag: null },
+          { step: 3, title: "Quick Actions", description: "Static action tiles", wireframe: "actions-old", tag: null },
+          { step: 4, title: "Notifications", description: "Basic push notification toggle", wireframe: "notifications-old", tag: null },
+          { step: 5, title: "Settings", description: "Flat settings list", wireframe: "settings-old", tag: null },
+          { step: 6, title: "Promotions Banner", description: "Marketing content carousel", wireframe: "promo-old", tag: "removed-step" },
+          { step: 7, title: "Dashboard", description: "Fixed layout dashboard", wireframe: "dashboard-old", tag: null }
+        ],
+        commentary: [
+          { step: 1, type: "positive", delta: "Personalized greeting replaces generic welcome. Regulatory notices moved to less prominent position.", sentiment: "First impression shifts from compliance-heavy to warm." },
+          { step: 2, type: "neutral", delta: "New profile setup step lets users select financial goals and preferences.", sentiment: "The app signals it cares about needs, not just accounts — but adds friction." },
+          { step: 3, type: "positive", delta: "Portfolio-style dashboard with trend charts replaces flat account table.", sentiment: "Users feel more financially aware." },
+          { step: 4, type: "positive", delta: "Actions adapt based on what each user actually does, not a one-size-fits-all grid.", sentiment: "Less hunting for the right button." },
+          { step: 5, type: "positive", delta: "Smart thresholds let users define what matters to them for alerts.", sentiment: "Signal over noise — users trust notifications more." },
+          { step: 6, type: "neutral", delta: "Biometric setup replaces simple password. More secure but requires initial configuration.", sentiment: "Trade-off between upfront effort and daily convenience." },
+          { step: 7, type: "positive", delta: "Goal tracking with milestones is entirely new — builds financial engagement.", sentiment: "Users have a reason to come back beyond transactions." },
+          { step: 8, type: "positive", delta: "Financial health score replaces promotional carousel. Actionable tips included.", sentiment: "Users feel guided rather than sold to." },
+          { step: 9, type: "positive", delta: "Dashboard rearranges itself based on frequency of use and time of day.", sentiment: "The app learns the user's rhythm." }
+        ]
+      },
+      treasures: {
+        newDesign: [
+          { step: 1, title: "Welcome Screen", description: "Premium greeting with portfolio summary", wireframe: "welcome-new", tag: null },
+          { step: 2, title: "Set Up Profile", description: "Wealth profile with risk appetite assessment", wireframe: "profile-new", tag: "new-step" },
+          { step: 3, title: "Portfolio Overview", description: "Comprehensive wealth dashboard with asset allocation", wireframe: "dashboard-new", tag: null },
+          { step: 4, title: "Quick Actions", description: "Priority actions: RM contact, investment opportunities", wireframe: "actions-new", tag: null },
+          { step: 5, title: "Notification Preferences", description: "Market alerts, portfolio threshold notifications", wireframe: "notifications-new", tag: "new-step" },
+          { step: 6, title: "Security Setup", description: "Enhanced security with hardware key and biometric layers", wireframe: "security-new", tag: "new-step" },
+          { step: 7, title: "Goal Setting", description: "Wealth milestones and retirement planning targets", wireframe: "goals-new", tag: "new-step" },
+          { step: 8, title: "Market Insights", description: "Curated market analysis and investment recommendations", wireframe: "insights-new", tag: "new-step" },
+          { step: 9, title: "Personalized Dashboard", description: "Wealth command center with RM integration", wireframe: "final-dashboard-new", tag: "new-step" }
+        ],
+        oldDesign: [
+          { step: 1, title: "Generic Welcome", description: "Standard welcome banner", wireframe: "welcome-old", tag: null },
+          { step: 2, title: "Account Overview", description: "List of accounts and investments separately", wireframe: "dashboard-old", tag: null },
+          { step: 3, title: "Quick Actions", description: "Same actions as regular banking", wireframe: "actions-old", tag: null },
+          { step: 4, title: "Notifications", description: "Same notification system as mass market", wireframe: "notifications-old", tag: null },
+          { step: 5, title: "Settings", description: "Generic settings page", wireframe: "settings-old", tag: null },
+          { step: 6, title: "Promotions Banner", description: "Wealth management promotional content", wireframe: "promo-old", tag: "removed-step" },
+          { step: 7, title: "Dashboard", description: "Static wealth dashboard", wireframe: "dashboard-old", tag: null }
+        ],
+        commentary: [
+          { step: 1, type: "positive", delta: "Premium-toned greeting with inline portfolio summary replaces standard banner.", sentiment: "Customers immediately feel the differentiation." },
+          { step: 2, type: "neutral", delta: "Wealth-specific profiling captures risk appetite and investment horizons.", sentiment: "Signals wealth management understanding — but adds an extra step." },
+          { step: 3, type: "positive", delta: "Unified wealth dashboard with asset allocation chart. Old design separated banking and investments.", sentiment: "Complete financial picture — no more context-switching." },
+          { step: 4, type: "positive", delta: "Quick actions now prioritize RM contact and investment opportunities over basic banking.", sentiment: "Feels tailored to high-value needs." },
+          { step: 5, type: "positive", delta: "Market-specific alerts and portfolio thresholds replace generic push notifications.", sentiment: "Information arrives when it matters, not on a schedule." },
+          { step: 6, type: "negative", delta: "Enhanced security adds complexity. Hardware key support is new but may confuse some users.", sentiment: "Premium security, but migration path needed for existing users." },
+          { step: 7, type: "positive", delta: "Wealth milestone tracking and retirement planning are entirely new.", sentiment: "The app becomes a life planning tool, not just a banking app." },
+          { step: 8, type: "positive", delta: "Curated market insights replace generic promos. Personalized to user's portfolio.", sentiment: "Turns the app into an advisor tool." },
+          { step: 9, type: "positive", delta: "Wealth command center with integrated RM access and portfolio analytics.", sentiment: "Feels like having a private banking terminal." }
+        ]
+      }
+    }
+  },
+  "transfer-money": {
+    label: "I want to transfer money to someone",
+    segments: {
+      posb: {
+        newDesign: [
+          { step: 1, title: "Transfer Hub", description: "Unified transfer screen with recent recipients at top", wireframe: "transfer-hub-new", tag: null },
+          { step: 2, title: "Select Recipient", description: "Smart search with recent, frequent, and contacts integration", wireframe: "recipient-new", tag: null },
+          { step: 3, title: "Enter Amount", description: "Clean amount entry with real-time balance check", wireframe: "amount-new", tag: null },
+          { step: 4, title: "Review & Send", description: "Single confirmation screen with all details", wireframe: "review-new", tag: null },
+          { step: 5, title: "Success + Share", description: "Confirmation with option to share receipt or schedule recurring", wireframe: "success-new", tag: null },
+          { step: 6, title: "Schedule Transfer", description: "Set up recurring or future-dated transfers", wireframe: "schedule-new", tag: "new-step" },
+          { step: 7, title: "Set Reminder", description: "Reminder to follow up or verify receipt", wireframe: "reminder-new", tag: "new-step" },
+          { step: 8, title: "Transfer History", description: "Visual timeline of all transfers to this recipient", wireframe: "history-new", tag: "new-step" },
+          { step: 9, title: "Spending Impact", description: "How this transfer affects your budget and goals", wireframe: "impact-new", tag: "new-step" }
+        ],
+        oldDesign: [
+          { step: 1, title: "Select Transfer Type", description: "Choose between local, overseas, PayNow from a list", wireframe: "transfer-type-old", tag: null },
+          { step: 2, title: "Select Account", description: "Pick source account from dropdown", wireframe: "account-old", tag: "removed-step" },
+          { step: 3, title: "Enter Details", description: "Manual entry of recipient bank and account number", wireframe: "details-old", tag: null },
+          { step: 4, title: "Enter Amount", description: "Amount field with separate currency selector", wireframe: "amount-old", tag: null },
+          { step: 5, title: "Review Details", description: "Confirmation page with fine print", wireframe: "review-old", tag: null },
+          { step: 6, title: "OTP Verification", description: "Separate OTP input screen", wireframe: "otp-old", tag: "removed-step" },
+          { step: 7, title: "Success", description: "Basic success message with reference number", wireframe: "success-old", tag: null }
+        ],
+        commentary: [
+          { step: 1, type: "positive", delta: "Transfer type selection eliminated. Hub auto-detects from recipient. Recent recipients shown upfront.", sentiment: "No decision fatigue at the start." },
+          { step: 2, type: "positive", delta: "Smart search replaces manual bank/account entry. Integrates with phone contacts and PayNow.", sentiment: "As easy as messaging someone." },
+          { step: 3, type: "positive", delta: "Real-time balance shown inline. Source account auto-selected.", sentiment: "Users see if they have enough without navigating away." },
+          { step: 4, type: "negative", delta: "Biometric auth replaces separate OTP step. Single review screen. Users who rely on OTP may feel disoriented initially.", sentiment: "Faster, but change management needed for some users." },
+          { step: 5, type: "neutral", delta: "Success screen adds sharing and recurring options. Reference number is copyable.", sentiment: "Users can act on completion, not just acknowledge it." },
+          { step: 6, type: "positive", delta: "Scheduling is now a natural next step after transfer, not buried in settings.", sentiment: "Repeat transfers become effortless." },
+          { step: 7, type: "neutral", delta: "Reminders are a new concept — users can set follow-ups for pending transfers.", sentiment: "Useful for rent, shared bills, or business payments." },
+          { step: 8, type: "positive", delta: "Visual transfer history grouped by recipient replaces flat transaction log.", sentiment: "Context makes past transfers meaningful." },
+          { step: 9, type: "positive", delta: "Spending impact shows how the transfer affects budgets and goals in real time.", sentiment: "Financial awareness at the point of decision." }
+        ]
+      },
+      dbs: {
+        newDesign: [
+          { step: 1, title: "Transfer Hub", description: "Smart transfer home with recent and scheduled transfers", wireframe: "transfer-hub-new", tag: null },
+          { step: 2, title: "Select Recipient", description: "AI-powered recipient suggestions with search", wireframe: "recipient-new", tag: null },
+          { step: 3, title: "Enter Amount", description: "Inline balance with suggested amounts from history", wireframe: "amount-new", tag: null },
+          { step: 4, title: "Review & Send", description: "Streamlined confirmation with biometric auth", wireframe: "review-new", tag: null },
+          { step: 5, title: "Success + Share", description: "Rich confirmation with next actions", wireframe: "success-new", tag: null },
+          { step: 6, title: "Schedule Transfer", description: "Smart scheduling with pattern detection from history", wireframe: "schedule-new", tag: "new-step" },
+          { step: 7, title: "Set Reminder", description: "AI-suggested reminders based on transfer patterns", wireframe: "reminder-new", tag: "new-step" },
+          { step: 8, title: "Transfer History", description: "Intelligent history with categorization and search", wireframe: "history-new", tag: "new-step" },
+          { step: 9, title: "Spending Impact", description: "Real-time budget impact analysis with forecasting", wireframe: "impact-new", tag: "new-step" }
+        ],
+        oldDesign: [
+          { step: 1, title: "Select Transfer Type", description: "Manual transfer type picker", wireframe: "transfer-type-old", tag: null },
+          { step: 2, title: "Select Account", description: "Source account selection", wireframe: "account-old", tag: "removed-step" },
+          { step: 3, title: "Enter Details", description: "Recipient details form", wireframe: "details-old", tag: null },
+          { step: 4, title: "Enter Amount", description: "Basic amount input", wireframe: "amount-old", tag: null },
+          { step: 5, title: "Review Details", description: "Standard review page", wireframe: "review-old", tag: null },
+          { step: 6, title: "OTP Verification", description: "SMS OTP input", wireframe: "otp-old", tag: "removed-step" },
+          { step: 7, title: "Success", description: "Minimal success confirmation", wireframe: "success-old", tag: null }
+        ],
+        commentary: [
+          { step: 1, type: "positive", delta: "Smart hub replaces type selector. Shows scheduled and pending transfers alongside new flow.", sentiment: "Users see context, not just a blank form." },
+          { step: 2, type: "positive", delta: "AI suggestions surface likely recipients based on time, patterns, and recent activity.", sentiment: "Feels predictive and personal." },
+          { step: 3, type: "positive", delta: "Suggested amounts from transfer history reduce typing. Balance shown inline.", sentiment: "Speeds up repeat transfers." },
+          { step: 4, type: "negative", delta: "Biometric replaces OTP. Fewer steps, but some users may not have biometrics set up or may distrust it.", sentiment: "Simpler, but needs fallback path." },
+          { step: 5, type: "neutral", delta: "Post-transfer actions: share receipt, schedule recurring, set reminders.", sentiment: "Completion feels like a beginning, not a dead end." },
+          { step: 6, type: "positive", delta: "Pattern detection suggests scheduling based on transfer history.", sentiment: "The app anticipates user needs before they articulate them." },
+          { step: 7, type: "neutral", delta: "AI-suggested reminders may feel presumptuous to some users.", sentiment: "Helpful when accurate, annoying when wrong — calibration matters." },
+          { step: 8, type: "positive", delta: "Categorized history with search replaces chronological transaction list.", sentiment: "Finding past transfers goes from scrolling to searching." },
+          { step: 9, type: "positive", delta: "Budget forecasting shows projected impact of transfer on monthly spending.", sentiment: "Transforms a transaction into a financial decision." }
+        ]
+      },
+      treasures: {
+        newDesign: [
+          { step: 1, title: "Transfer Hub", description: "Premium transfer center with multi-currency support", wireframe: "transfer-hub-new", tag: null },
+          { step: 2, title: "Select Recipient", description: "Global recipient directory with FX rate preview", wireframe: "recipient-new", tag: null },
+          { step: 3, title: "Enter Amount", description: "Multi-currency amount with live FX rates", wireframe: "amount-new", tag: null },
+          { step: 4, title: "Review & Send", description: "Comprehensive review with FX lock option", wireframe: "review-new", tag: null },
+          { step: 5, title: "Success + Share", description: "Premium confirmation with RM notification", wireframe: "success-new", tag: null },
+          { step: 6, title: "Schedule Transfer", description: "Multi-currency scheduling with FX rate alerts", wireframe: "schedule-new", tag: "new-step" },
+          { step: 7, title: "Set Reminder", description: "RM-integrated reminders for large transfers", wireframe: "reminder-new", tag: "new-step" },
+          { step: 8, title: "Transfer History", description: "Cross-currency transfer analytics and reporting", wireframe: "history-new", tag: "new-step" },
+          { step: 9, title: "Spending Impact", description: "Wealth impact analysis across portfolios", wireframe: "impact-new", tag: "new-step" }
+        ],
+        oldDesign: [
+          { step: 1, title: "Select Transfer Type", description: "Transfer type with separate overseas flow", wireframe: "transfer-type-old", tag: null },
+          { step: 2, title: "Select Account", description: "Account picker across multiple currencies", wireframe: "account-old", tag: "removed-step" },
+          { step: 3, title: "Enter Details", description: "Complex form with SWIFT/routing fields", wireframe: "details-old", tag: null },
+          { step: 4, title: "Enter Amount", description: "Amount with manual currency conversion", wireframe: "amount-old", tag: null },
+          { step: 5, title: "Review Details", description: "Dense review with regulatory disclosures", wireframe: "review-old", tag: null },
+          { step: 6, title: "OTP Verification", description: "Hardware token OTP", wireframe: "otp-old", tag: "removed-step" },
+          { step: 7, title: "Success", description: "Reference number only", wireframe: "success-old", tag: null }
+        ],
+        commentary: [
+          { step: 1, type: "positive", delta: "Unified transfer center handles local and international seamlessly. Multi-currency built in.", sentiment: "No more thinking about transfer types." },
+          { step: 2, type: "positive", delta: "Global directory with embedded FX preview. SWIFT details auto-filled.", sentiment: "Eliminates anxiety of getting routing details wrong." },
+          { step: 3, type: "neutral", delta: "Live FX rates with rate-lock option. Shows equivalent amounts in both currencies simultaneously.", sentiment: "Transparency is great — but rate-lock UX needs testing." },
+          { step: 4, type: "negative", delta: "FX rate lock and biometric auth replace OTP. Users accustomed to hardware tokens may resist.", sentiment: "Premium feel, but migration path for token users is critical." },
+          { step: 5, type: "positive", delta: "RM auto-notified of large transfers. PDF receipt generation and sharing.", sentiment: "Feels like having a personal banker." },
+          { step: 6, type: "positive", delta: "FX rate alerts let users schedule transfers when rates are favorable.", sentiment: "Turns timing from guesswork into strategy." },
+          { step: 7, type: "neutral", delta: "RM-integrated reminders add a human touch but depend on RM responsiveness.", sentiment: "Premium service expectation — must deliver consistently." },
+          { step: 8, type: "positive", delta: "Cross-currency analytics show transfer patterns and FX impact over time.", sentiment: "Wealth-grade reporting for everyday transactions." },
+          { step: 9, type: "positive", delta: "Wealth impact analysis shows how transfers affect portfolio allocation and liquidity.", sentiment: "Every transfer is contextualized within the bigger picture." }
+        ]
+      }
+    }
+  }
+};
+
+const BRAND_COLORS = {
+  posb: { primary: '#0072AA', light: 'rgba(0, 114, 170, 0.08)', glow: 'rgba(0, 114, 170, 0.15)' },
+  dbs:  { primary: '#E31837', light: 'rgba(227, 24, 55, 0.08)', glow: 'rgba(227, 24, 55, 0.15)' },
+  treasures: { primary: '#C5A664', light: 'rgba(197, 166, 100, 0.08)', glow: 'rgba(197, 166, 100, 0.15)' }
+};
+
+const TYPE_LABELS = {
+  positive: 'Improvement',
+  negative: 'Risk',
+  neutral: 'Change'
+};
+
+let state = { journey: 'sign-up-to-dashboard', segment: 'dbs', currentStep: 0, isTransitioning: false };
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+const scrollNew = $('#scrollNew');
+const scrollCommentary = $('#scrollCommentary');
+const scrollOld = $('#scrollOld');
+const trackNew = $('#trackNew');
+const trackCommentary = $('#trackCommentary');
+const trackOld = $('#trackOld');
+const journeyList = $('#journeyList');
+const progressIndicator = $('#progressIndicator');
+const cardOverlay = $('#cardOverlay');
+
+// WIREFRAME RENDERERS
+const SB = `<div class="wire-status-bar"><span class="wire-time">9:41</span><div class="wire-icons"><span></span><span></span><span></span></div></div>`;
+const BN = `<div class="wire-bottom-nav"><div class="wire-nav-item"><div class="wire-nav-icon active"></div><div class="wire-nav-text"></div></div><div class="wire-nav-item"><div class="wire-nav-icon"></div><div class="wire-nav-text"></div></div><div class="wire-nav-item"><div class="wire-nav-icon"></div><div class="wire-nav-text"></div></div><div class="wire-nav-item"><div class="wire-nav-icon"></div><div class="wire-nav-text"></div></div></div>`;
+const HB = (w) => `<div class="wire-header-bar"><div class="wire-back-arrow"></div><div class="wire-header-title" style="width:${w||'40%'}"></div></div>`;
+
+function renderWireframe(type) {
+  const w = {
+    'welcome-new': `<div class="wire-content">${SB}<div style="height:8px"></div><div class="wire-avatar" style="width:36px;height:36px;margin:0 auto;opacity:0.4"></div><div style="height:6px"></div><div class="wire-block accent" style="height:8px;width:70%;margin:0 auto"></div><div style="height:3px"></div><div class="wire-line medium" style="margin:0 auto"></div><div style="height:10px"></div><div class="wire-card"><div class="wire-line short"></div><div class="wire-block" style="height:16px"></div></div><div class="wire-card"><div class="wire-line short"></div><div class="wire-block" style="height:16px"></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div>${BN}</div>`,
+    'welcome-old': `<div class="wire-content">${SB}<div style="height:6px"></div><div class="wire-block accent" style="height:40px"></div><div style="height:8px"></div><div class="wire-line"></div><div style="height:3px"></div><div class="wire-line medium"></div><div style="height:3px"></div><div class="wire-line short"></div><div style="height:10px"></div><div class="wire-divider"></div><div style="height:6px"></div><div class="wire-line"></div><div style="height:3px"></div><div class="wire-line"></div><div style="height:3px"></div><div class="wire-line medium"></div><div class="wire-spacer"></div><div class="wire-row" style="gap:6px"><div class="wire-button" style="flex:1"><span class="wire-btn-text"></span></div><div class="wire-button" style="flex:1;background:var(--wire-block)"><span class="wire-btn-text" style="background:var(--text-muted)"></span></div></div></div>`,
+    'profile-new': `<div class="wire-content">${SB}${HB('50%')}<div style="height:4px"></div><div class="wire-avatar" style="width:40px;height:40px;margin:0 auto;opacity:0.3"></div><div style="height:3px"></div><div class="wire-line short" style="margin:0 auto"></div><div style="height:8px"></div><div class="wire-input"><span class="wire-placeholder"></span></div><div class="wire-input"><span class="wire-placeholder" style="width:70%"></span></div><div style="height:6px"></div><div class="wire-line short"></div><div style="height:3px"></div><div class="wire-row" style="gap:4px"><div class="wire-block accent" style="height:20px;flex:1"></div><div class="wire-block" style="height:20px;flex:1"></div><div class="wire-block" style="height:20px;flex:1"></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'dashboard-new': `<div class="wire-content">${SB}<div class="wire-header-bar"><div class="wire-header-title" style="width:35%"></div><div class="wire-avatar" style="width:16px;height:16px"></div></div><div class="wire-card"><div class="wire-line short"></div><div class="wire-amount">$12,450</div><div class="wire-chart"><div class="wire-chart-bar" style="height:40%"></div><div class="wire-chart-bar" style="height:60%"></div><div class="wire-chart-bar" style="height:45%"></div><div class="wire-chart-bar active" style="height:80%"></div><div class="wire-chart-bar" style="height:70%"></div><div class="wire-chart-bar" style="height:55%"></div></div></div><div class="wire-list-item"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:35%"></div></div></div><div class="wire-list-item"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:40%"></div></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'dashboard-old': `<div class="wire-content">${SB}<div class="wire-header-bar"><div class="wire-header-title" style="width:40%"></div></div><div class="wire-tabs"><div class="wire-tab active"></div><div class="wire-tab"></div><div class="wire-tab"></div></div><div style="height:6px"></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line short"></div><div style="flex:1"></div><div class="wire-line" style="width:30%"></div></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line short"></div><div style="flex:1"></div><div class="wire-line" style="width:25%"></div></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line short"></div><div style="flex:1"></div><div class="wire-line" style="width:35%"></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'actions-new': `<div class="wire-content">${SB}${HB('40%')}<div class="wire-line short"></div><div style="height:6px"></div><div class="wire-row" style="gap:6px"><div class="wire-card" style="flex:1;align-items:center;padding:10px 5px"><div class="wire-list-icon" style="margin:0 auto"></div><div class="wire-line" style="width:80%;height:3px;margin:0 auto"></div></div><div class="wire-card" style="flex:1;align-items:center;padding:10px 5px"><div class="wire-list-icon" style="margin:0 auto"></div><div class="wire-line" style="width:80%;height:3px;margin:0 auto"></div></div></div><div class="wire-row" style="gap:6px"><div class="wire-card" style="flex:1;align-items:center;padding:10px 5px"><div class="wire-list-icon" style="margin:0 auto"></div><div class="wire-line" style="width:80%;height:3px;margin:0 auto"></div></div><div class="wire-card" style="flex:1;align-items:center;padding:10px 5px"><div class="wire-list-icon" style="margin:0 auto;opacity:0.3;background:var(--wire-line)"></div><div class="wire-line" style="width:80%;height:3px;margin:0 auto"></div></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'actions-old': `<div class="wire-content">${SB}${HB('30%')}<div style="height:6px"></div><div class="wire-row" style="gap:5px"><div class="wire-block" style="height:34px;flex:1"></div><div class="wire-block" style="height:34px;flex:1"></div><div class="wire-block" style="height:34px;flex:1"></div></div><div class="wire-row" style="gap:5px"><div class="wire-block" style="height:34px;flex:1"></div><div class="wire-block" style="height:34px;flex:1"></div><div class="wire-block" style="height:34px;flex:1"></div></div><div class="wire-row" style="gap:5px"><div class="wire-block" style="height:34px;flex:1"></div><div class="wire-block" style="height:34px;flex:1"></div><div class="wire-block" style="height:34px;flex:1"></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'insights-new': `<div class="wire-content">${SB}${HB('35%')}<div class="wire-card"><div class="wire-row"><div class="wire-list-icon" style="border-radius:50%"></div><div class="wire-col"><div class="wire-line" style="width:60%"></div></div></div><div class="wire-chart"><div class="wire-chart-bar" style="height:30%"></div><div class="wire-chart-bar" style="height:50%"></div><div class="wire-chart-bar active" style="height:70%"></div><div class="wire-chart-bar" style="height:60%"></div><div class="wire-chart-bar" style="height:90%"></div></div><div class="wire-line short"></div></div><div class="wire-card"><div class="wire-line medium"></div><div style="height:2px"></div><div class="wire-line short"></div><div style="height:3px"></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div><div class="wire-line short" style="flex:1"></div></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'promo-old': `<div class="wire-content">${SB}<div class="wire-header-bar"><div class="wire-header-title" style="width:30%"></div></div><div class="wire-block accent xtall"></div><div style="height:3px"></div><div class="wire-row" style="justify-content:center;gap:3px"><div style="width:5px;height:5px;border-radius:50%;background:var(--wire-accent)"></div><div style="width:5px;height:5px;border-radius:50%;background:var(--wire-line)"></div><div style="width:5px;height:5px;border-radius:50%;background:var(--wire-line)"></div></div><div style="height:6px"></div><div class="wire-line"></div><div style="height:3px"></div><div class="wire-line medium"></div><div style="height:8px"></div><div class="wire-button"><span class="wire-btn-text" style="width:30%"></span></div><div class="wire-spacer"></div>${BN}</div>`,
+    'notifications-new': `<div class="wire-content">${SB}${HB('45%')}<div style="height:4px"></div><div class="wire-line short"></div><div style="height:6px"></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div></div></div></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div></div></div></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div></div></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'notifications-old': `<div class="wire-content">${SB}${HB('40%')}<div style="height:6px"></div><div class="wire-line"></div><div style="height:8px"></div><div class="wire-row" style="padding:6px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line medium"></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div></div></div><div class="wire-row" style="padding:6px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line medium"></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'security-new': `<div class="wire-content">${SB}${HB('40%')}<div style="height:6px"></div><div style="width:36px;height:36px;border-radius:50%;border:2px solid var(--wire-accent);margin:0 auto;opacity:0.3;display:flex;align-items:center;justify-content:center"><div style="width:14px;height:14px;border-radius:50%;background:var(--wire-accent);opacity:0.4"></div></div><div style="height:4px"></div><div class="wire-line short" style="margin:0 auto"></div><div style="height:8px"></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div><div class="wire-line short" style="height:3px"></div></div></div></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div><div class="wire-line short" style="height:3px"></div></div></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'settings-old': `<div class="wire-content">${SB}${HB('35%')}<div style="height:6px"></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line medium"></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line medium"></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line medium"></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-row" style="padding:5px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line medium"></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'goals-new': `<div class="wire-content">${SB}${HB('35%')}<div style="height:4px"></div><div class="wire-card"><div class="wire-line short"></div><div style="height:8px;background:var(--wire-block);border-radius:4px;position:relative"><div style="height:100%;width:65%;background:var(--wire-accent);opacity:0.4;border-radius:4px"></div></div><div class="wire-amount-small">65% of $5,000</div></div><div class="wire-card"><div class="wire-line short"></div><div style="height:8px;background:var(--wire-block);border-radius:4px;position:relative"><div style="height:100%;width:30%;background:var(--wire-accent);opacity:0.4;border-radius:4px"></div></div><div class="wire-amount-small">30% of $10,000</div></div><div style="height:6px"></div><div class="wire-button"><span class="wire-btn-text"></span></div><div class="wire-spacer"></div>${BN}</div>`,
+    'final-dashboard-new': `<div class="wire-content">${SB}<div class="wire-header-bar"><div class="wire-header-title" style="width:30%"></div><div class="wire-avatar" style="width:16px;height:16px"></div></div><div class="wire-card"><div class="wire-amount">$12,450</div><div class="wire-line short" style="margin:0 auto"></div></div><div class="wire-row" style="gap:4px"><div class="wire-card" style="flex:1;align-items:center;padding:8px 4px"><div class="wire-list-icon" style="margin:0 auto"></div><div class="wire-line" style="width:70%;height:3px;margin:0 auto"></div></div><div class="wire-card" style="flex:1;align-items:center;padding:8px 4px"><div class="wire-list-icon" style="margin:0 auto"></div><div class="wire-line" style="width:70%;height:3px;margin:0 auto"></div></div></div><div class="wire-list-item"><div class="wire-list-icon" style="border-radius:50%"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:40%"></div></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'transfer-hub-new': `<div class="wire-content">${SB}<div class="wire-header-bar"><div class="wire-header-title" style="width:30%"></div></div><div class="wire-input"><span class="wire-placeholder" style="width:60%"></span></div><div style="height:3px"></div><div class="wire-line short" style="opacity:0.6"></div><div style="height:3px"></div><div class="wire-row" style="gap:6px"><div class="wire-avatar" style="width:30px;height:30px"></div><div class="wire-avatar" style="width:30px;height:30px"></div><div class="wire-avatar" style="width:30px;height:30px"></div><div class="wire-avatar" style="width:30px;height:30px;opacity:0.1;background:var(--wire-line)"></div></div><div style="height:6px"></div><div class="wire-divider"></div><div style="height:3px"></div><div class="wire-line short" style="opacity:0.6"></div><div class="wire-list-item"><div class="wire-list-icon" style="border-radius:50%"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:40%"></div></div></div><div class="wire-list-item"><div class="wire-list-icon" style="border-radius:50%"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:35%"></div></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'transfer-type-old': `<div class="wire-content">${SB}${HB('35%')}<div style="height:6px"></div><div class="wire-line" style="margin-bottom:3px"></div><div style="height:6px"></div><div class="wire-row" style="padding:8px 0;border-bottom:1px solid var(--border-color)"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-row" style="padding:8px 0;border-bottom:1px solid var(--border-color)"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-row" style="padding:8px 0;border-bottom:1px solid var(--border-color)"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-top:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'recipient-new': `<div class="wire-content">${SB}${HB('35%')}<div class="wire-input"><span class="wire-placeholder" style="width:70%"></span></div><div style="height:6px"></div><div class="wire-line short" style="opacity:0.6"></div><div style="height:3px"></div><div class="wire-list-item"><div class="wire-avatar" style="width:24px;height:24px"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:50%"></div></div></div><div class="wire-list-item"><div class="wire-avatar" style="width:24px;height:24px"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:45%"></div></div></div><div class="wire-list-item"><div class="wire-avatar" style="width:24px;height:24px"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:55%"></div></div></div><div class="wire-divider"></div><div class="wire-line short" style="opacity:0.6"></div><div class="wire-list-item"><div class="wire-avatar" style="width:24px;height:24px;opacity:0.1;background:var(--wire-line)"></div><div class="wire-col"><div class="wire-line medium"></div></div></div><div class="wire-spacer"></div></div>`,
+    'account-old': `<div class="wire-content">${SB}${HB('40%')}<div style="height:6px"></div><div class="wire-line"></div><div style="height:8px"></div><div style="border:1.5px solid var(--border-color);padding:8px;"><div class="wire-row"><div class="wire-line medium"></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-bottom:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div></div><div style="height:8px"></div><div class="wire-card"><div class="wire-row" style="padding:3px 0;border-bottom:1px solid var(--border-color)"><div class="wire-line short"></div><div style="flex:1"></div><div class="wire-line" style="width:30%"></div></div><div class="wire-row" style="padding:3px 0"><div class="wire-line short"></div><div style="flex:1"></div><div class="wire-line" style="width:25%"></div></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'details-old': `<div class="wire-content">${SB}${HB('40%')}<div style="height:3px"></div><div class="wire-line short" style="opacity:0.7"></div><div class="wire-input"><span class="wire-placeholder" style="width:60%"></span></div><div class="wire-line short" style="opacity:0.7"></div><div class="wire-input"><span class="wire-placeholder" style="width:50%"></span></div><div class="wire-line short" style="opacity:0.7"></div><div class="wire-input"><span class="wire-placeholder" style="width:40%"></span></div><div class="wire-line short" style="opacity:0.7"></div><div class="wire-input"><span class="wire-placeholder" style="width:55%"></span></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'amount-new': `<div class="wire-content">${SB}${HB('30%')}<div style="height:8px"></div><div class="wire-row" style="justify-content:center"><div class="wire-avatar" style="width:28px;height:28px"></div></div><div class="wire-line short" style="margin:0 auto;opacity:0.7"></div><div style="height:8px"></div><div class="wire-amount">$0.00</div><div style="height:2px"></div><div class="wire-amount-small">Balance: $12,450.00</div><div style="height:8px"></div><div class="wire-row" style="gap:5px;justify-content:center"><div class="wire-block" style="height:20px;width:44px"></div><div class="wire-block" style="height:20px;width:44px"></div><div class="wire-block" style="height:20px;width:44px"></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'amount-old': `<div class="wire-content">${SB}${HB('30%')}<div style="height:6px"></div><div class="wire-line short" style="opacity:0.7"></div><div style="height:3px"></div><div class="wire-row" style="gap:5px"><div class="wire-block" style="height:24px;width:44px;border:1.5px solid var(--border-color);background:#FAFAFA"></div><div class="wire-input" style="flex:1"><span class="wire-placeholder" style="width:30%"></span></div></div><div style="height:8px"></div><div class="wire-line short" style="opacity:0.7"></div><div style="height:3px"></div><div style="border:1.5px solid var(--border-color);padding:8px;"><div class="wire-row"><div class="wire-line medium"></div><div style="width:7px;height:7px;border-right:1.5px solid var(--wire-line);border-bottom:1.5px solid var(--wire-line);transform:rotate(45deg)"></div></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'review-new': `<div class="wire-content">${SB}${HB('30%')}<div style="height:3px"></div><div class="wire-card"><div class="wire-row"><div class="wire-avatar" style="width:24px;height:24px"></div><div class="wire-col"><div class="wire-line short"></div></div></div><div class="wire-divider"></div><div class="wire-row"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:30%"></div></div><div class="wire-row"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:25%"></div></div><div class="wire-divider"></div><div class="wire-amount" style="font-size:12px">$500.00</div></div><div style="height:3px"></div><div class="wire-row" style="gap:3px;justify-content:center"><div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--wire-accent);display:flex;align-items:center;justify-content:center"><div style="width:12px;height:12px;border-radius:50%;background:var(--wire-accent);opacity:0.4"></div></div></div><div class="wire-line short" style="margin:0 auto;opacity:0.6"></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'review-old': `<div class="wire-content">${SB}${HB('35%')}<div style="height:3px"></div><div class="wire-row" style="padding:3px 0"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:35%"></div></div><div class="wire-row" style="padding:3px 0"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:30%"></div></div><div class="wire-row" style="padding:3px 0"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:25%"></div></div><div class="wire-row" style="padding:3px 0"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:28%"></div></div><div class="wire-divider"></div><div class="wire-row" style="padding:3px 0"><div class="wire-line medium" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:30%"></div></div><div style="height:3px"></div><div class="wire-line"></div><div style="height:2px"></div><div class="wire-line medium"></div><div style="height:2px"></div><div class="wire-line short"></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'success-new': `<div class="wire-content">${SB}<div style="height:14px"></div><div style="width:34px;height:34px;border-radius:50%;background:var(--wire-accent);opacity:0.15;margin:0 auto;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:5px;border-left:2px solid var(--wire-accent);border-bottom:2px solid var(--wire-accent);transform:rotate(-45deg);margin-top:-2px"></div></div><div style="height:6px"></div><div class="wire-block accent" style="height:8px;width:50%;margin:0 auto"></div><div style="height:3px"></div><div class="wire-amount" style="font-size:12px">$500.00</div><div class="wire-line short" style="margin:0 auto;opacity:0.6"></div><div style="height:8px"></div><div class="wire-row" style="gap:6px"><div class="wire-button" style="flex:1;height:26px"><span class="wire-btn-text" style="width:35%"></span></div><div class="wire-button" style="flex:1;height:26px;background:var(--wire-block)"><span class="wire-btn-text" style="width:35%;background:var(--text-muted)"></span></div></div><div style="height:6px"></div><div class="wire-card"><div class="wire-line short" style="opacity:0.6"></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div><div class="wire-line medium" style="flex:1"></div></div></div><div class="wire-spacer"></div><div class="wire-button" style="background:var(--wire-block)"><span class="wire-btn-text" style="background:var(--text-muted)"></span></div></div>`,
+    'success-old': `<div class="wire-content">${SB}<div style="height:18px"></div><div style="width:30px;height:30px;border-radius:50%;border:2px solid var(--wire-accent);margin:0 auto;opacity:0.4"></div><div style="height:8px"></div><div class="wire-block accent" style="height:7px;width:40%;margin:0 auto"></div><div style="height:12px"></div><div class="wire-line" style="opacity:0.6"></div><div style="height:3px"></div><div class="wire-line medium" style="opacity:0.6"></div><div style="height:12px"></div><div class="wire-divider"></div><div style="height:6px"></div><div class="wire-line short" style="opacity:0.5"></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'otp-old': `<div class="wire-content">${SB}${HB('35%')}<div style="height:12px"></div><div class="wire-line" style="margin:0 auto;width:70%;opacity:0.7"></div><div style="height:3px"></div><div class="wire-line short" style="margin:0 auto;opacity:0.5"></div><div style="height:12px"></div><div class="wire-row" style="gap:6px;justify-content:center"><div style="width:30px;height:34px;border:2px solid var(--border-color)"></div><div style="width:30px;height:34px;border:2px solid var(--border-color)"></div><div style="width:30px;height:34px;border:2px solid var(--border-color)"></div><div style="width:30px;height:34px;border:2px solid var(--border-color)"></div></div><div style="height:8px"></div><div class="wire-line short" style="margin:0 auto;opacity:0.5"></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'schedule-new': `<div class="wire-content">${SB}${HB('40%')}<div style="height:4px"></div><div class="wire-card"><div class="wire-line short"></div><div style="height:4px"></div><div class="wire-row" style="gap:3px"><div class="wire-block" style="height:24px;flex:1"></div><div class="wire-block" style="height:24px;flex:1"></div></div><div style="height:4px"></div><div class="wire-line short" style="opacity:0.6"></div></div><div style="height:4px"></div><div class="wire-card"><div class="wire-line short"></div><div class="wire-row"><div class="wire-line medium"></div><div class="wire-toggle"><div class="wire-toggle-track"><div class="wire-toggle-thumb"></div></div></div></div></div><div class="wire-spacer"></div><div class="wire-button"><span class="wire-btn-text"></span></div></div>`,
+    'reminder-new': `<div class="wire-content">${SB}${HB('35%')}<div style="height:6px"></div><div style="width:32px;height:32px;border-radius:50%;background:var(--wire-accent);opacity:0.12;margin:0 auto"></div><div style="height:4px"></div><div class="wire-line short" style="margin:0 auto"></div><div style="height:8px"></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div></div></div><div class="wire-card"><div class="wire-row"><div class="wire-list-icon"></div><div class="wire-col"><div class="wire-line medium"></div></div></div></div><div class="wire-spacer"></div><div class="wire-row" style="gap:6px"><div class="wire-button" style="flex:1"><span class="wire-btn-text"></span></div><div class="wire-button" style="flex:1;background:var(--wire-block)"><span class="wire-btn-text" style="background:var(--text-muted)"></span></div></div></div>`,
+    'history-new': `<div class="wire-content">${SB}${HB('40%')}<div style="height:4px"></div><div class="wire-input"><span class="wire-placeholder" style="width:50%"></span></div><div style="height:4px"></div><div class="wire-line short" style="opacity:0.6"></div><div class="wire-list-item"><div class="wire-avatar" style="width:20px;height:20px"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:40%"></div></div><div class="wire-line" style="width:20%;height:3px"></div></div><div class="wire-list-item"><div class="wire-avatar" style="width:20px;height:20px"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:35%"></div></div><div class="wire-line" style="width:18%;height:3px"></div></div><div class="wire-list-item"><div class="wire-avatar" style="width:20px;height:20px"></div><div class="wire-col"><div class="wire-line short"></div><div class="wire-line" style="height:3px;width:45%"></div></div><div class="wire-line" style="width:22%;height:3px"></div></div><div class="wire-spacer"></div>${BN}</div>`,
+    'impact-new': `<div class="wire-content">${SB}${HB('40%')}<div style="height:4px"></div><div class="wire-card"><div class="wire-line short"></div><div class="wire-chart"><div class="wire-chart-bar" style="height:60%"></div><div class="wire-chart-bar active" style="height:80%"></div><div class="wire-chart-bar" style="height:45%"></div><div class="wire-chart-bar" style="height:30%"></div><div class="wire-chart-bar" style="height:50%"></div></div></div><div class="wire-card"><div class="wire-row"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:25%;height:3px"></div></div><div class="wire-row"><div class="wire-line short" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:30%;height:3px"></div></div><div class="wire-divider"></div><div class="wire-row"><div class="wire-line medium" style="opacity:0.6"></div><div style="flex:1"></div><div class="wire-line" style="width:20%;height:3px"></div></div></div><div class="wire-spacer"></div><div class="wire-button" style="background:var(--wire-block)"><span class="wire-btn-text" style="background:var(--text-muted)"></span></div></div>`
+  };
+  return w[type] || `<div class="wire-content"><div class="wire-spacer"></div><div class="wire-block tall"></div><div class="wire-spacer"></div></div>`;
+}
+
+// RENDERING
+function getJourneyData() {
+  const journey = JOURNEYS[state.journey];
+  if (!journey) return null;
+  return journey.segments[state.segment];
+}
+
+function buildJourneySelector() {
+  journeyList.innerHTML = '';
+  Object.entries(JOURNEYS).forEach(([key, j]) => {
+    const opt = document.createElement('label');
+    opt.className = `journey-option ${key === state.journey ? 'active' : ''}`;
+    opt.innerHTML = `<input type="radio" name="journey" value="${key}" ${key === state.journey ? 'checked' : ''}>${j.label}`;
+    opt.addEventListener('click', () => {
+      if (state.isTransitioning || state.journey === key) return;
+      state.journey = key;
+      state.currentStep = 0;
+      $$('.journey-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      transitionJourney();
+    });
+    journeyList.appendChild(opt);
+  });
+}
+
+function buildSegmentToggle() {
+  $$('.segment-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.segment === state.segment);
+    btn.addEventListener('click', () => {
+      if (state.isTransitioning || state.segment === btn.dataset.segment) return;
+      state.segment = btn.dataset.segment;
+      $$('.segment-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyBrandColors();
+      transitionSegment();
+    });
+  });
+}
+
+function applyBrandColors() {
+  const colors = BRAND_COLORS[state.segment];
+  document.documentElement.style.setProperty('--brand-primary', colors.primary);
+  document.documentElement.style.setProperty('--brand-light', colors.light);
+  document.documentElement.style.setProperty('--brand-glow', colors.glow);
+}
+
+function renderLanes() {
+  const data = getJourneyData();
+  if (!data) return;
+  trackNew.innerHTML = '';
+  trackCommentary.innerHTML = '';
+  trackOld.innerHTML = '';
+
+  data.newDesign.forEach((step, i) => {
+    if (i > 0) { const c = document.createElement('div'); c.className = 'flow-connector'; trackNew.appendChild(c); }
+    trackNew.appendChild(createStepCard(step, 'new', i));
+  });
+  data.commentary.forEach((item, i) => {
+    if (i > 0) { const s = document.createElement('div'); s.className = 'commentary-spacer'; trackCommentary.appendChild(s); }
+    trackCommentary.appendChild(createCommentaryCard(item, i));
+  });
+  data.oldDesign.forEach((step, i) => {
+    if (i > 0) { const c = document.createElement('div'); c.className = 'flow-connector'; trackOld.appendChild(c); }
+    trackOld.appendChild(createStepCard(step, 'old', i));
+  });
+
+  requestAnimationFrame(() => {
+    const all = [...trackNew.querySelectorAll('.step-card'), ...trackCommentary.querySelectorAll('.commentary-card'), ...trackOld.querySelectorAll('.step-card')];
+    all.forEach((card, i) => setTimeout(() => card.classList.add('visible'), 60 * i));
+  });
+  updateProgress();
+  scrollNew.scrollLeft = 0;
+  scrollCommentary.scrollLeft = 0;
+  scrollOld.scrollLeft = 0;
+}
+
+function createStepCard(step, lane, index) {
+  const card = document.createElement('div');
+  card.className = 'step-card';
+  card.dataset.step = index;
+  let tagHTML = '';
+  if (step.tag === 'new-step') tagHTML = '<span class="step-tag new-step">New Step</span>';
+  else if (step.tag === 'removed-step') tagHTML = '<span class="step-tag removed-step">Removed</span>';
+  card.innerHTML = `
+    <div class="step-number">Step ${step.step}</div>
+    <div class="phone-frame"><div class="phone-notch"></div>${renderWireframe(step.wireframe)}</div>
+    <div class="step-label">${step.title}</div>
+    ${tagHTML}
+  `;
+  card.querySelector('.phone-frame').addEventListener('click', () => expandCard(step));
+  card.addEventListener('mouseenter', () => highlightStep(index, true));
+  card.addEventListener('mouseleave', () => highlightStep(index, false));
+  return card;
+}
+
+function createCommentaryCard(item, index) {
+  const card = document.createElement('div');
+  card.className = 'commentary-card';
+  card.dataset.step = index;
+  const type = item.type || 'neutral';
+
+  if (type === 'no-change') {
+    card.innerHTML = `<div class="commentary-inner type-no-change"><div class="commentary-no-change">No change in this step</div></div>`;
+  } else {
+    const label = TYPE_LABELS[type] || TYPE_LABELS.neutral;
+    card.innerHTML = `
+      <div class="commentary-inner type-${type}">
+        <span class="commentary-type-label ${type}">${label}</span>
+        <div class="commentary-delta">${item.delta}</div>
+        <div class="commentary-sentiment">${item.sentiment}</div>
+      </div>
+    `;
+  }
+  card.addEventListener('mouseenter', () => highlightStep(index, true));
+  card.addEventListener('mouseleave', () => highlightStep(index, false));
+  return card;
+}
+
+// HIGHLIGHT / EXPAND / SCROLL SYNC
+function highlightStep(index, on) {
+  const sel = `[data-step="${index}"]`;
+  [...trackNew.querySelectorAll(sel), ...trackCommentary.querySelectorAll(sel), ...trackOld.querySelectorAll(sel)]
+    .forEach(el => el.classList.toggle('highlighted', on));
+}
+
+function expandCard(step) {
+  $('#expandedFrame').innerHTML = `<div class="phone-frame" style="width:270px;height:480px"><div class="phone-notch"></div>${renderWireframe(step.wireframe)}</div>`;
+  $('#expandedTitle').textContent = step.title;
+  $('#expandedDesc').textContent = step.description;
+  cardOverlay.classList.add('active');
+}
+$('#expandedClose').addEventListener('click', () => cardOverlay.classList.remove('active'));
+cardOverlay.addEventListener('click', (e) => { if (e.target === cardOverlay) cardOverlay.classList.remove('active'); });
+
+let isSyncing = false;
+scrollNew.addEventListener('scroll', () => {
+  if (isSyncing) return;
+  isSyncing = true;
+  const left = scrollNew.scrollLeft;
+  const maxNew = scrollNew.scrollWidth - scrollNew.clientWidth;
+  const ratio = maxNew > 0 ? left / maxNew : 0;
+  const maxC = scrollCommentary.scrollWidth - scrollCommentary.clientWidth;
+  scrollCommentary.scrollLeft = ratio * maxC * 0.88;
+  const maxO = scrollOld.scrollWidth - scrollOld.clientWidth;
+  scrollOld.scrollLeft = ratio * maxO;
+  updateProgress();
+  requestAnimationFrame(() => { isSyncing = false; });
+});
+
+$('#mainArea').addEventListener('wheel', (e) => {
+  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  e.preventDefault();
+  scrollNew.scrollLeft += e.deltaY;
+}, { passive: false });
+
+function updateProgress() {
+  const data = getJourneyData();
+  if (!data) return;
+  const maxScroll = scrollNew.scrollWidth - scrollNew.clientWidth;
+  const total = data.newDesign.length;
+  if (maxScroll <= 0) { progressIndicator.textContent = `Step 1 of ${total}`; return; }
+  const ratio = scrollNew.scrollLeft / maxScroll;
+  const step = Math.round(ratio * (total - 1)) + 1;
+  state.currentStep = step - 1;
+  progressIndicator.textContent = `Step ${step} of ${total}`;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (cardOverlay.classList.contains('active')) { if (e.key === 'Escape') cardOverlay.classList.remove('active'); return; }
+  const data = getJourneyData();
+  if (!data) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); scrollToStep(Math.min(state.currentStep + 1, data.newDesign.length - 1)); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); scrollToStep(Math.max(state.currentStep - 1, 0)); }
+});
+
+function scrollToStep(idx) {
+  const cards = trackNew.querySelectorAll('.step-card');
+  if (!cards[idx]) return;
+  const card = cards[idx];
+  const trackRect = trackNew.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+  const offset = cardRect.left - trackRect.left + scrollNew.scrollLeft - (scrollNew.clientWidth / 2) + (card.offsetWidth / 2);
+  scrollNew.scrollTo({ left: Math.max(0, offset), behavior: 'smooth' });
+  state.currentStep = idx;
+}
+
+function transitionJourney() {
+  state.isTransitioning = true;
+  [...trackNew.querySelectorAll('.step-card, .flow-connector'), ...trackCommentary.querySelectorAll('.commentary-card, .commentary-spacer'), ...trackOld.querySelectorAll('.step-card, .flow-connector')]
+    .forEach(c => { c.style.transition = 'opacity 0.45s var(--ease-smooth)'; c.style.opacity = '0'; });
+  setTimeout(() => { renderLanes(); state.isTransitioning = false; }, 500);
+}
+
+function transitionSegment() {
+  state.isTransitioning = true;
+  const ma = $('#mainArea');
+  ma.style.transition = 'opacity 0.45s var(--ease-smooth)';
+  ma.style.opacity = '0.3';
+  setTimeout(() => { renderLanes(); ma.style.opacity = '1'; setTimeout(() => { ma.style.transition = ''; state.isTransitioning = false; }, 500); }, 450);
+}
+
+function setupIntersectionObserver() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      const f = e.target.querySelector('.phone-frame');
+      if (!f) return;
+      f.style.transform = (e.isIntersecting && e.intersectionRatio > 0.5) ? 'scale(1.01)' : 'scale(1)';
+    });
+  }, { root: scrollNew, threshold: [0, 0.5, 1] });
+  new MutationObserver(() => { trackNew.querySelectorAll('.step-card').forEach(c => obs.observe(c)); }).observe(trackNew, { childList: true });
+}
+
+// RESPONSIVE FRAME SIZING
+function updateFrameSize() {
+  const laneEl = document.querySelector('.lane-new');
+  if (!laneEl) return;
+  const laneHeight = laneEl.getBoundingClientRect().height;
+  const overhead = 110;
+  const availableHeight = laneHeight - overhead;
+  const frameHeight = Math.max(160, Math.min(320, availableHeight));
+  const frameWidth = Math.round(frameHeight * (156 / 280));
+  const cardWidth = frameWidth + 24;
+  document.documentElement.style.setProperty('--screen-height', frameHeight + 'px');
+  document.documentElement.style.setProperty('--screen-width', frameWidth + 'px');
+  document.documentElement.style.setProperty('--card-width', cardWidth + 'px');
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { updateFrameSize(); renderLanes(); }, 150);
+});
+
+// INIT
+applyBrandColors();
+buildJourneySelector();
+buildSegmentToggle();
+updateFrameSize();
+renderLanes();
+setupIntersectionObserver();
+</script>
+</body>
+</html>
