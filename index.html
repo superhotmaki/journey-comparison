@@ -191,14 +191,16 @@ html, body {
 
 .scroll-container {
   position: absolute; inset: 0;
-  overflow-x: auto; overflow-y: hidden;
-  scroll-behavior: smooth;
+  overflow-x: hidden; overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin; scrollbar-color: var(--border-color) transparent;
 }
+.lane-new .scroll-container {
+  overflow-x: auto;
+}
 .lane-commentary .scroll-container,
 .lane-old .scroll-container {
-  overflow-x: hidden; pointer-events: none;
+  pointer-events: none;
 }
 .lane-new .scroll-container::-webkit-scrollbar { height: 4px; }
 .lane-new .scroll-container::-webkit-scrollbar-track { background: transparent; }
@@ -211,6 +213,7 @@ html, body {
   padding: 32px 64px 12px 120px;
   height: 100%;
   min-width: max-content;
+  will-change: transform;
 }
 .lane-commentary .lane-track {
   padding-top: 14px;
@@ -915,8 +918,9 @@ function renderLanes() {
   });
   updateProgress();
   scrollNew.scrollLeft = 0;
-  scrollCommentary.scrollLeft = 0;
-  scrollOld.scrollLeft = 0;
+  trackCommentary.style.transform = 'translateX(0)';
+  trackOld.style.transform = 'translateX(0)';
+  scrollVelocity = 0;
 }
 
 function createStepCard(step, lane, index) {
@@ -977,25 +981,51 @@ function expandCard(step) {
 $('#expandedClose').addEventListener('click', () => cardOverlay.classList.remove('active'));
 cardOverlay.addEventListener('click', (e) => { if (e.target === cardOverlay) cardOverlay.classList.remove('active'); });
 
-let isSyncing = false;
-scrollNew.addEventListener('scroll', () => {
-  if (isSyncing) return;
-  isSyncing = true;
+// Smooth scroll sync using transforms for commentary & old lanes
+let scrollVelocity = 0;
+let scrollTarget = 0;
+let isAnimating = false;
+const FRICTION = 0.92;
+const WHEEL_MULTIPLIER = 1.2;
+
+function syncLanes() {
   const left = scrollNew.scrollLeft;
   const maxNew = scrollNew.scrollWidth - scrollNew.clientWidth;
-  const ratio = maxNew > 0 ? left / maxNew : 0;
-  const maxC = scrollCommentary.scrollWidth - scrollCommentary.clientWidth;
-  scrollCommentary.scrollLeft = ratio * maxC * 0.88;
-  const maxO = scrollOld.scrollWidth - scrollOld.clientWidth;
-  scrollOld.scrollLeft = ratio * maxO;
+  if (maxNew <= 0) return;
+  const ratio = left / maxNew;
+
+  const cTrack = trackCommentary;
+  const oTrack = trackOld;
+  const cMax = cTrack.scrollWidth - scrollCommentary.clientWidth;
+  const oMax = oTrack.scrollWidth - scrollOld.clientWidth;
+
+  cTrack.style.transform = `translateX(${-ratio * cMax}px)`;
+  oTrack.style.transform = `translateX(${-ratio * oMax}px)`;
+
   updateProgress();
-  requestAnimationFrame(() => { isSyncing = false; });
-});
+}
+
+scrollNew.addEventListener('scroll', syncLanes);
+
+function animateScroll() {
+  if (Math.abs(scrollVelocity) < 0.5) {
+    scrollVelocity = 0;
+    isAnimating = false;
+    return;
+  }
+  scrollNew.scrollLeft += scrollVelocity;
+  scrollVelocity *= FRICTION;
+  requestAnimationFrame(animateScroll);
+}
 
 $('#mainArea').addEventListener('wheel', (e) => {
-  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
   e.preventDefault();
-  scrollNew.scrollLeft += e.deltaY;
+  const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+  scrollVelocity += delta * WHEEL_MULTIPLIER;
+  if (!isAnimating) {
+    isAnimating = true;
+    requestAnimationFrame(animateScroll);
+  }
 }, { passive: false });
 
 function updateProgress() {
@@ -1024,9 +1054,26 @@ function scrollToStep(idx) {
   const card = cards[idx];
   const trackRect = trackNew.getBoundingClientRect();
   const cardRect = card.getBoundingClientRect();
-  const offset = cardRect.left - trackRect.left + scrollNew.scrollLeft - (scrollNew.clientWidth / 2) + (card.offsetWidth / 2);
-  scrollNew.scrollTo({ left: Math.max(0, offset), behavior: 'smooth' });
+  const target = cardRect.left - trackRect.left + scrollNew.scrollLeft - (scrollNew.clientWidth / 2) + (card.offsetWidth / 2);
+  const dest = Math.max(0, Math.min(target, scrollNew.scrollWidth - scrollNew.clientWidth));
+  smoothScrollTo(dest, 500);
   state.currentStep = idx;
+}
+
+function smoothScrollTo(target, duration) {
+  const start = scrollNew.scrollLeft;
+  const diff = target - start;
+  if (Math.abs(diff) < 1) return;
+  const startTime = performance.now();
+  scrollVelocity = 0;
+  function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    scrollNew.scrollLeft = start + diff * ease(progress);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function transitionJourney() {
