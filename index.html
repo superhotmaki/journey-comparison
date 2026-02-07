@@ -430,16 +430,60 @@ html, body {
 }
 .card-overlay.active { opacity: 1; pointer-events: all; }
 .card-overlay .expanded-card {
-  background: var(--card-bg); border-radius: 0; padding: 32px;
+  background: var(--card-bg); border-radius: 0; padding: 40px 48px;
   box-shadow: 0 24px 80px rgba(0,0,0,0.15);
   transform: scale(0.95); transition: transform 0.5s var(--ease-smooth);
-  display: flex; flex-direction: column; align-items: center; gap: 20px;
-  position: relative;
+  position: relative; max-width: 920px; width: 90vw;
 }
 .card-overlay.active .expanded-card { transform: scale(1); }
-.expanded-card .phone-frame { width: 270px; height: 480px; }
-.expanded-card .expanded-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 400; letter-spacing: -0.02em; }
-.expanded-card .expanded-desc { font-size: 13px; color: var(--text-secondary); text-align: center; max-width: 300px; line-height: 1.6; letter-spacing: -0.01em; }
+.expanded-comparison {
+  display: flex; align-items: flex-start; gap: 40px; justify-content: center;
+}
+.expanded-col {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; width: 220px; flex-shrink: 0;
+}
+.expanded-col .phone-frame { width: 200px; height: 360px; }
+.expanded-col-label {
+  font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px;
+  color: var(--text-muted); letter-spacing: -0.01em; margin-bottom: 4px;
+}
+.expanded-col-title {
+  font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 400;
+  letter-spacing: -0.02em; text-align: center; color: var(--text-primary);
+}
+.expanded-col-desc {
+  font-size: 12px; color: var(--text-secondary); text-align: center;
+  line-height: 1.5; letter-spacing: -0.01em; max-width: 220px;
+}
+.expanded-middle {
+  flex: 1; max-width: 300px; padding: 0 8px; display: flex; flex-direction: column; gap: 20px;
+  align-self: center;
+}
+.expanded-middle-label {
+  font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px;
+  color: var(--text-muted); letter-spacing: -0.01em;
+}
+.expanded-middle-type {
+  font-family: 'Playfair Display', serif; font-style: italic; font-size: 12px;
+  font-weight: 400; padding-top: 12px;
+}
+.expanded-middle-type.positive { border-top: 2px solid var(--color-positive); color: var(--color-positive); }
+.expanded-middle-type.negative { border-top: 2px solid var(--color-negative); color: var(--color-negative); }
+.expanded-middle-type.neutral { border-top: 2px solid var(--color-neutral); color: var(--color-neutral); }
+.expanded-middle-delta {
+  font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 400;
+  line-height: 1.6; letter-spacing: -0.01em; color: var(--text-primary);
+}
+.expanded-middle-sentiment {
+  font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px;
+  line-height: 1.5; color: var(--text-muted); letter-spacing: -0.01em;
+}
+.expanded-placeholder {
+  width: 200px; height: 360px; border: 1.5px dashed var(--border-color);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text-muted);
+  text-align: center; padding: 24px; letter-spacing: -0.01em;
+}
 .expanded-card .expanded-close {
   position: absolute; top: 16px; right: 16px;
   width: 28px; height: 28px; border: none; background: transparent;
@@ -562,9 +606,7 @@ html, body {
 <div class="card-overlay" id="cardOverlay">
   <div class="expanded-card" id="expandedCard">
     <button class="expanded-close" id="expandedClose">&times;</button>
-    <div id="expandedFrame"></div>
-    <div class="expanded-title" id="expandedTitle"></div>
-    <div class="expanded-desc" id="expandedDesc"></div>
+    <div class="expanded-comparison" id="expandedComparison"></div>
   </div>
 </div>
 
@@ -939,7 +981,7 @@ function createStepCard(step, lane, index) {
     <div class="step-label">${step.title}</div>
     ${tagHTML}
   `;
-  card.querySelector('.phone-frame').addEventListener('click', () => expandCard(step));
+  card.querySelector('.phone-frame').addEventListener('click', () => expandCard(step, lane));
   card.addEventListener('mouseenter', () => highlightStep(index, true));
   card.addEventListener('mouseleave', () => highlightStep(index, false));
   return card;
@@ -965,6 +1007,14 @@ function createCommentaryCard(item, index) {
   }
   card.addEventListener('mouseenter', () => highlightStep(index, true));
   card.addEventListener('mouseleave', () => highlightStep(index, false));
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => {
+    const data = getJourneyData();
+    if (!data) return;
+    const newStep = data.newDesign.find(s => s.step === item.step);
+    if (newStep) expandCard(newStep, 'new');
+    else { const oldStep = data.oldDesign.find(s => s.step === item.step); if (oldStep) expandCard(oldStep, 'old'); }
+  });
   return card;
 }
 
@@ -975,10 +1025,71 @@ function highlightStep(index, on) {
     .forEach(el => el.classList.toggle('highlighted', on));
 }
 
-function expandCard(step) {
-  $('#expandedFrame').innerHTML = `<div class="phone-frame" style="width:270px;height:480px"><div class="phone-notch"></div>${renderWireframe(step.wireframe)}</div>`;
-  $('#expandedTitle').textContent = step.title;
-  $('#expandedDesc').textContent = step.description;
+function expandCard(step, lane) {
+  const data = getJourneyData();
+  if (!data) return;
+
+  const commentary = data.commentary.find(c => c.step === step.step);
+  let newStep, oldStep;
+  if (lane === 'old') {
+    oldStep = step;
+    newStep = data.newDesign.find(s => s.step === step.step);
+  } else {
+    newStep = step;
+    oldStep = data.oldDesign.find(s => s.step === step.step);
+  }
+
+  const typeLabels = { positive: 'Improvement', negative: 'Risk', neutral: 'Change' };
+
+  let newHTML = '';
+  if (newStep) {
+    newHTML = `<div class="expanded-col">
+      <div class="expanded-col-label">New design</div>
+      <div class="phone-frame"><div class="phone-notch"></div>${renderWireframe(newStep.wireframe)}</div>
+      <div class="expanded-col-title">${newStep.title}</div>
+      <div class="expanded-col-desc">${newStep.description}</div>
+    </div>`;
+  } else {
+    newHTML = `<div class="expanded-col">
+      <div class="expanded-col-label">New design</div>
+      <div class="expanded-placeholder">No equivalent in new design</div>
+      <div class="expanded-col-title"></div>
+    </div>`;
+  }
+
+  let commentaryHTML = '';
+  if (commentary) {
+    const t = commentary.type || 'neutral';
+    commentaryHTML = `<div class="expanded-middle">
+      <div class="expanded-middle-label">What changed</div>
+      <div class="expanded-middle-type ${t}">${typeLabels[t] || 'Change'}</div>
+      <div class="expanded-middle-delta">${commentary.delta}</div>
+      <div class="expanded-middle-sentiment">${commentary.sentiment}</div>
+    </div>`;
+  } else {
+    commentaryHTML = `<div class="expanded-middle">
+      <div class="expanded-middle-label">What changed</div>
+      <div class="expanded-middle-delta" style="color:var(--text-muted);font-size:13px;">No commentary for this step.</div>
+    </div>`;
+  }
+
+  let oldHTML = '';
+  if (oldStep) {
+    oldHTML = `<div class="expanded-col">
+      <div class="expanded-col-label">Current design</div>
+      <div class="phone-frame"><div class="phone-notch"></div>${renderWireframe(oldStep.wireframe)}</div>
+      <div class="expanded-col-title">${oldStep.title}</div>
+      <div class="expanded-col-desc">${oldStep.description}</div>
+    </div>`;
+  } else {
+    oldHTML = `<div class="expanded-col">
+      <div class="expanded-col-label">Current design</div>
+      <div class="expanded-placeholder">No equivalent in current design</div>
+      <div class="expanded-col-title"></div>
+    </div>`;
+  }
+
+  $('#expandedComparison').innerHTML = newHTML + commentaryHTML + oldHTML;
   cardOverlay.classList.add('active');
 }
 $('#expandedClose').addEventListener('click', () => cardOverlay.classList.remove('active'));
