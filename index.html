@@ -475,7 +475,10 @@ html, body {
           sessionStorage.setItem(AUTH_KEY, 'true');
           gate.style.transition = 'opacity 0.5s';
           gate.style.opacity = '0';
-          setTimeout(function() { gate.style.display = 'none'; }, 500);
+          setTimeout(function() {
+            gate.style.display = 'none';
+            document.querySelectorAll('.step-card, .commentary-card').forEach(function(c) { c.classList.add('visible'); });
+          }, 500);
         } else {
           document.getElementById('authError').style.opacity = '1';
           this.value = '';
@@ -912,10 +915,10 @@ function renderLanes() {
     trackOld.appendChild(createStepCard(step, 'old', i));
   });
 
-  requestAnimationFrame(() => {
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
     const all = [...trackNew.querySelectorAll('.step-card'), ...trackCommentary.querySelectorAll('.commentary-card'), ...trackOld.querySelectorAll('.step-card')];
     all.forEach((card, i) => setTimeout(() => card.classList.add('visible'), 60 * i));
-  });
+  }); });
   updateProgress();
   scrollNew.scrollLeft = 0;
   trackCommentary.style.transform = 'translateX(0)';
@@ -990,18 +993,8 @@ const WHEEL_MULTIPLIER = 1.2;
 
 function syncLanes() {
   const left = scrollNew.scrollLeft;
-  const maxNew = scrollNew.scrollWidth - scrollNew.clientWidth;
-  if (maxNew <= 0) return;
-  const ratio = left / maxNew;
-
-  const cTrack = trackCommentary;
-  const oTrack = trackOld;
-  const cMax = cTrack.scrollWidth - scrollCommentary.clientWidth;
-  const oMax = oTrack.scrollWidth - scrollOld.clientWidth;
-
-  cTrack.style.transform = `translateX(${-ratio * cMax}px)`;
-  oTrack.style.transform = `translateX(${-ratio * oMax}px)`;
-
+  trackCommentary.style.transform = `translateX(${-left}px)`;
+  trackOld.style.transform = `translateX(${-left}px)`;
   updateProgress();
 }
 
